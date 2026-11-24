@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080405">
+<title>От Максима</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#080405;color:#ffd9ce}body{height:100dvh}canvas{display:block;width:100%;height:100%}.signature{position:absolute;left:0;right:0;top:73%;text-align:center;font:italic clamp(24px,7vw,44px) Georgia,serif;letter-spacing:.07em;opacity:0;transform:translateY(12px);animation:reveal 2.8s 3.2s ease forwards;text-shadow:0 0 25px #ff426e;pointer-events:none}@keyframes reveal{to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){.signature{animation:none;opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="scene" role="img" aria-label="Пульсирующее сердце из светящихся символов"></canvas>
+<div class="signature">От Максима</div>
+<script>
+(()=>{
+'use strict';
+const tg=window.Telegram?.WebApp;try{tg?.ready();tg?.expand();tg?.setHeaderColor('#080405');tg?.setBackgroundColor('#080405')}catch(e){}
+const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});if(!ctx)return;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const glyphs=' .,:;+=*xoO01#%&@';const colors=['#401326','#70203c','#a72c50','#e34668','#ff7486','#ffad9d','#ffe3c8'];
+let w=0,h=0,dpr,stepX,stepY,points=[],stars=[],size=0,start=performance.now(),last=0;
+const rand=(a,b)=>{const v=Math.sin(a*127.1+b*311.7)*43758.5453;return v-Math.floor(v)};
+const heart=(x,y)=>{const z=x*x+y*y-1;return z*z*z-x*x*y*y*y};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function resize(){w=canvas.clientWidth;h=canvas.clientHeight;if(w<2||h<2)return;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);size=Math.min(w*.35,h*.22,250);stepX=Math.max(5,size/30);stepY=stepX*1.55;points=[];stars=[];
+for(let y=-1.18;y<=1.42;y+=stepY/size)for(let x=-1.25;x<=1.25;x+=stepX/size){const f=heart(x,y);if(f<=0)points.push({x:x*size,y:-y*size,r:rand(x,y),f})}
+for(let i=0;i<100;i++)stars.push({x:rand(i,11)*w,y:rand(i,20)*h,r:rand(i,37),a:rand(i,43)*Math.PI*2});draw(reduced?4:(performance.now()-start)/1000);}
+function draw(t){if(!w||!h)return;const cx=w/2,cy=h*.43,phase=t%1.15;const beat=reduced?1:1+.115*Math.exp(-Math.pow((phase-.16)/.075,2))+.075*Math.exp(-Math.pow((phase-.35)/.10,2));const intro=reduced?1:Math.min(1,t/2.6);ctx.globalAlpha=1;ctx.fillStyle='#080405';ctx.fillRect(0,0,w,h);
+const fog=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.min(w,h)*.65);fog.addColorStop(0,'rgba(180,20,57,'+(.16+2*(beat-1)*.15)+')');fog.addColorStop(1,'rgba(8,4,5,0)');ctx.fillStyle=fog;ctx.fillRect(0,0,w,h);
+ctx.font=Math.max(8,stepX*1.5)+'px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+for(const s of stars){ctx.globalAlpha=(.12+.38*(.5+.5*Math.sin(t*.8+s.a)))*intro;ctx.fillStyle='#b85a65';ctx.fillText(s.r>.85?'·':'.',s.x,(s.y-t*(2+s.r*4)%h+h)%h)}
+// Soft ripples expand after each heartbeat.
+if(!reduced){for(let j=0;j<2;j++){const p=(t+j*.575)%1.15/1.15;ctx.globalAlpha=(1-p)*.13*intro;ctx.strokeStyle='#e83c66';ctx.lineWidth=.7;ctx.beginPath();ctx.ellipse(cx,cy,size*(.95+p*.9),size*(.85+p*.9),0,0,Math.PI*2);ctx.stroke()}}
+ctx.globalAlpha=1;for(const p of points){const r=rand(p.r,Math.floor(t*9));const edge=Math.exp(-Math.abs(p.f)*12);const wave=.5+.5*Math.sin(p.y*.085-t*3+p.r*2);const val=Math.min(.999,.19+edge*.28+wave*.29+r*.22);const a=clamp((intro-p.r*.66)*3,0,1);if(a<=0)continue;const scatter=(1-intro)*(1-intro)*size*.8;ctx.globalAlpha=a;ctx.fillStyle=colors[Math.floor(val*colors.length)];ctx.fillText(glyphs[Math.min(glyphs.length-1,Math.floor(val*glyphs.length))],cx+p.x*beat+Math.cos(p.r*45)*scatter,cy+p.y*beat+Math.sin(p.r*45)*scatter)}
+ctx.globalAlpha=1;}
+function tick(now){requestAnimationFrame(tick);if(document.hidden||now-last<32)return;last=now;draw((now-start)/1000)}
+window.addEventListener('resize',resize);resize();if(!reduced)requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
